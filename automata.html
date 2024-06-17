@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finite Automaton Designer</title>
+</head>
+<body>
+    <h1>Finite Automaton Designer</h1>
+    <button onclick="addState()">Add State</button>
+    <button onclick="prepareDefineInitialState()">Set Initial State</button>
+    <button onclick="prepareDefineFinalState()">Set Final State</button>
+    <button onclick="prepareAddTransition()">Add Transition</button>
+    <div>
+        <input type="text" id="transition-input" placeholder="Enter transition as 'q1-q2'">
+        <button onclick="addTransitionFromString()">Add Transition from Input</button>
+    </div>
+    <svg id="automaton-canvas" width="800" height="600" style="border:1px solid black;"></svg>
+
+    <script >
+        let stateCounter = 0;
+let states = [];
+let transitions = [];
+let initialState = null;
+let finalStates = [];
+let currentMode = null;
+let selectedState = null;
+let currentLine = null;
+
+function addState() {
+    stateCounter++;
+    const stateId = `q${stateCounter}`;
+    states.push(stateId);
+    drawState(stateId);
+}
+
+function drawState(stateId) {
+    const canvas = document.getElementById('automaton-canvas');
+    const state = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    state.setAttribute('cx', Math.random() * 700 + 50);
+    state.setAttribute('cy', Math.random() * 500 + 50);
+    state.setAttribute('r', 30);
+    state.setAttribute('id', stateId);
+    state.setAttribute('stroke', 'black');
+    state.setAttribute('stroke-width', 2);
+    state.setAttribute('fill', 'white');
+    state.addEventListener('mousedown', (event) => stateMouseDown(event, stateId));
+    state.addEventListener('mouseup', (event) => stateMouseUp(event, stateId));
+    canvas.appendChild(state);
+
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('x', state.getAttribute('cx'));
+    label.setAttribute('y', state.getAttribute('cy'));
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('dy', '.3em');
+    label.textContent = stateId;
+    canvas.appendChild(label);
+}
+
+function stateMouseDown(event, stateId) {
+    if (currentMode === 'ADD_TRANSITION') {
+        const canvas = document.getElementById('automaton-canvas');
+        const state = document.getElementById(stateId);
+
+        const fromX = parseFloat(state.getAttribute('cx'));
+        const fromY = parseFloat(state.getAttribute('cy'));
+
+        currentLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        currentLine.setAttribute('x1', fromX);
+        currentLine.setAttribute('y1', fromY);
+        currentLine.setAttribute('x2', fromX);
+        currentLine.setAttribute('y2', fromY);
+        currentLine.setAttribute('stroke', 'black');
+        currentLine.setAttribute('marker-end', 'url(#arrow)');
+        canvas.appendChild(currentLine);
+
+        selectedState = stateId;
+
+        canvas.addEventListener('mousemove', drawLine);
+    }
+}
+
+function drawLine(event) {
+    if (currentLine) {
+        const canvas = document.getElementById('automaton-canvas');
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        currentLine.setAttribute('x2', x);
+        currentLine.setAttribute('y2', y);
+    }
+}
+
+function stateMouseUp(event, stateId) {
+    const canvas = document.getElementById('automaton-canvas');
+
+    if (currentMode === 'ADD_TRANSITION' && selectedState) {
+        const toState = stateId;
+
+        if (selectedState !== toState) {
+            addTransition(selectedState, toState);
+        }
+
+        selectedState = null;
+        currentLine = null;
+        currentMode = null;
+        canvas.removeEventListener('mousemove', drawLine);
+    } else if (currentMode === 'SET_INITIAL') {
+        initialState = stateId;
+        console.log(`Initial state set to ${stateId}`);
+        highlightInitialState(stateId);
+        currentMode = null;
+    } else if (currentMode === 'SET_FINAL') {
+        if (!finalStates.includes(stateId)) {
+            finalStates.push(stateId);
+            console.log(`State ${stateId} added to final states`);
+            highlightFinalState(stateId);
+        }
+        currentMode = null;
+    }
+}
+
+function addTransition(fromState, toState) {
+    console.log(`Transition from ${fromState} to ${toState} added`);
+    transitions.push({ from: fromState, to: toState });
+    drawTransition(fromState, toState);
+}
+
+function drawTransition(fromState, toState) {
+    const canvas = document.getElementById('automaton-canvas');
+    const fromElement = document.getElementById(fromState);
+    const toElement = document.getElementById(toState);
+
+    const fromX = parseFloat(fromElement.getAttribute('cx'));
+    const fromY = parseFloat(fromElement.getAttribute('cy'));
+    const toX = parseFloat(toElement.getAttribute('cx'));
+    const toY = parseFloat(toElement.getAttribute('cy'));
+
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const offsetX = (dx * 30) / dist;
+    const offsetY = (dy * 30) / dist;
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', fromX + offsetX);
+    line.setAttribute('y1', fromY + offsetY);
+    line.setAttribute('x2', toX - offsetX);
+    line.setAttribute('y2', toY - offsetY);
+    line.setAttribute('stroke', 'black');
+    line.setAttribute('marker-end', 'url(#arrow)');
+    canvas.appendChild(line);
+}
+
+function prepareAddTransition() {
+    currentMode = 'ADD_TRANSITION';
+    selectedState = null;
+    console.log('Click on the start state, then click on the end state to add a transition');
+}
+
+function prepareDefineInitialState() {
+    currentMode = 'SET_INITIAL';
+    console.log('Click on a state to set as initial state');
+}
+
+function prepareDefineFinalState() {
+    currentMode = 'SET_FINAL';
+    console.log('Click on a state to set as final state');
+}
+
+function highlightInitialState(stateId) {
+    const state = document.getElementById(stateId);
+    state.setAttribute('stroke', 'blue');
+}
+
+function highlightFinalState(stateId) {
+    const state = document.getElementById(stateId);
+    state.setAttribute('stroke', 'green');
+}
+
+function addTransitionFromString() {
+    const input = document.getElementById('transition-input').value;
+    const [fromState, toState] = input.split('-');
+    if (states.includes(fromState) && states.includes(toState)) {
+        addTransition(fromState, toState);
+    } else {
+        alert('Invalid states. Please ensure the states exist.');
+    }
+}
+
+// Add arrow marker to the SVG definitions
+const svg = document.getElementById('automaton-canvas');
+const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+marker.setAttribute('id', 'arrow');
+marker.setAttribute('markerWidth', '10');
+marker.setAttribute('markerHeight', '10');
+marker.setAttribute('refX', '5');
+marker.setAttribute('refY', '3');
+marker.setAttribute('orient', 'auto');
+const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+path.setAttribute('d', 'M0,0 L0,6 L9,3 z');
+path.setAttribute('fill', 'black');
+marker.appendChild(path);
+defs.appendChild(marker);
+svg.appendChild(defs);
+
+    </script>
+</body>
+</html>
