@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DFA Minimization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        input, textarea {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        label {
+            font-weight: bold;
+        }
+        #output {
+            white-space: pre-wrap;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        #mynetwork {
+            width: 100%;
+            height: 500px;
+            border: 1px solid lightgray;
+        }
+    </style>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+</head>
+<body>
+    <h1>DFA Minimization Tool</h1>
+    <label for="states">States (comma-separated):</label>
+    <input type="text" id="states" placeholder="e.g., q0,q1,q2">
+    
+    <label for="alphabet">Alphabet (comma-separated):</label>
+    <input type="text" id="alphabet" placeholder="e.g., a,b">
+    
+    <label for="startState">Start State:</label>
+    <input type="text" id="startState" placeholder="e.g., q0">
+    
+    <label for="finalStates">Final States (comma-separated):</label>
+    <input type="text" id="finalStates" placeholder="e.g., q1,q2">
+    
+    <label for="transitions">Transitions (format: state,alphabet,next_state per line):</label>
+    <textarea id="transitions" rows="5" placeholder="e.g., q0,a,q1\nq0,b,q2\nq1,a,q1\nq1,b,q0\nq2,a,q2\nq2,b,q2"></textarea>
+    
+    <button onclick="minimizeDFA()">Minimize DFA</button>
+    
+    <h2>Minimized DFA</h2>
+    <div id="output"></div>
+    <div id="mynetwork"></div>
+    
+    <script src="dfa-minimization.js"></script>
+</body>
+</html>

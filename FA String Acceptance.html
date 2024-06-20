@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FA String Acceptance Checker</title>
+</head>
+<style>
+    body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin-top: 10px;
+}
+
+input {
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+button {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#result {
+    margin-top: 20px;
+    font-weight: bold;
+    text-align: center;
+}
+
+</style>
+<body>
+    <div class="container">
+        <h1>Finite Automaton String Acceptance Checker</h1>
+        <form id="faForm">
+            <label for="states">States (comma separated):</label>
+            <input type="text" id="states" required>
+
+            <label for="alphabet">Alphabet (comma separated):</label>
+            <input type="text" id="alphabet" required>
+
+            <label for="transitions">Transitions (format: q0,a->q1; q0,b->q2):</label>
+            <input type="text" id="transitions" required>
+
+            <label for="startState">Start State:</label>
+            <input type="text" id="startState" required>
+
+            <label for="acceptStates">Accept States (comma separated):</label>
+            <input type="text" id="acceptStates" required>
+
+            <label for="inputString">Input String:</label>
+            <input type="text" id="inputString" required>
+
+            <button type="submit">Check Acceptance</button>
+        </form>
+        <div id="result"></div>
+    </div>
+    <script>
+        document.getElementById('faForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    
+    const states = document.getElementById('states').value.split(',').map(s => s.trim());
+    const alphabet = document.getElementById('alphabet').value.split(',').map(a => a.trim());
+    const transitions = document.getElementById('transitions').value.split(';').map(t => t.trim());
+    const startState = document.getElementById('startState').value.trim();
+    const acceptStates = document.getElementById('acceptStates').value.split(',').map(s => s.trim());
+    const inputString = document.getElementById('inputString').value;
+
+    const transitionMap = {};
+
+    // Initialize the transition map for each state
+    for (let state of states) {
+        transitionMap[state] = {};
+    }
+
+    // Fill the transition map based on the user input
+    for (let transition of transitions) {
+        const [fromTo, toState] = transition.split('->').map(part => part.trim());
+        const [fromState, inputSymbol] = fromTo.split(',').map(part => part.trim());
+        
+        if (!transitionMap[fromState][inputSymbol]) {
+            transitionMap[fromState][inputSymbol] = [];
+        }
+        
+        transitionMap[fromState][inputSymbol].push(toState);
+    }
+
+    let currentState = startState;
+    let isAccepted = false;
+
+    // Process the input string through the FA
+    for (let symbol of inputString) {
+        if (!transitionMap[currentState] || !transitionMap[currentState][symbol] || transitionMap[currentState][symbol].length !== 1) {
+            isAccepted = false;
+            break;
+        }
+        currentState = transitionMap[currentState][symbol][0];
+    }
+
+    if (acceptStates.includes(currentState)) {
+        isAccepted = true;
+    }
+    const resultDiv = document.getElementById('result');
+    if (isAccepted) {
+        resultDiv.textContent = 'The input string is accepted by the FA';
+        resultDiv.style.color = 'green';
+    } else {
+        resultDiv.textContent = 'The input string is NOT accepted by the FA';
+        resultDiv.style.color = 'red';
+    }
+});
+
+    </script>
+</body>
+</html>
