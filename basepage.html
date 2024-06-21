@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <title>Document</title>
+    <title>Automata Project</title>
     <style>
         .form-container {
             position: relative;
             width: 80%;
             height: 70%;
             padding: 10px;
-            margin-top:30px;
-            margin-bottom:10px;
-            margin-left:10% ;
+            margin-top: 30px;
+            margin-bottom: 10px;
+            margin-left: 10%;
             font-family: 'Times New Roman', Times, serif;
             font-size: larger;
             background-color: rgb(232, 191, 238);
@@ -26,16 +26,17 @@
         }
         .container-fluid {
             font-family: 'Times New Roman', Times, serif;
-            
         }
-        #automaton-canvas{
+        #automaton-canvas {
             background-color: rgb(198, 206, 212);
             margin-left: 10%;
             margin-bottom: 30px;
             width: 80%;
             height: 600px;
             border-radius: 5px;
-
+        }
+        .accept-state {
+            stroke-width: 4;
         }
     </style>
 </head>
@@ -43,44 +44,323 @@
     <div class="container-fluid text-white text-center mb-2 pt-3 ">
         <h1>Automata Project</h1>
     </div>
-   
-        <div class="form-container">
-            <form class="h-100 d-flex flex-column justify-content-center">
-                <div class="mb-3">
-                    <label for="stateInputed" class="form-label">State: separated by comma</label>
-                    <input type="text" class="form-control" id="stateInputed" placeholder="e.g. q0,q1,q2">
-                </div>
-                <div class="mb-3">
-                    <label for="alphabetInputed" class="form-label">Alphabet: separated by comma</label>
-                    <input type="text" class="form-control" id="alphabetInputed" placeholder="e.g. ab">
-                </div>
-                <div class="mb-3">
-                    <label for="initialstateInputed" class="form-label">Initial state</label>
-                    <input type="text" class="form-control" id="initialstateInputed" placeholder="e.g. q0">
-                </div>
-                <div class="mb-3">
-                    <label for="finitestateInputed" class="form-label">Finite state</label>
-                    <input type="text" class="form-control" id="finitestateInputed" placeholder="e.g. q2">
-                </div>
-                <div class="mb-3">
-                    <label for="transitionInputed" class="form-label">Transition</label>
-                    <input type="text" class="form-control" id="transitionInputed" placeholder="e.g. q0-a-q1, q1-b-q2">
-                </div>
-                <div class="d-flex flex-wrap justify-content-between">
-                    <button type="button" class="btn btn-outline-primary" style="width: 48%;">Display graph</button>
-                    <button type="button" class="btn btn-outline-primary" style="width: 48%;">Minimize DFA</button>
-                    <button type="button" class="btn btn-outline-primary" style="width: 48%;">Test String (accepted)</button>
-                    <button type="button" class="btn btn-outline-primary" style="width: 48%;">Test deterministic</button>
-                    <button type="button" class="btn btn-outline-primary" style="width: 100%;">Construct equivalent DFA</button>
-
-                   
-
-
-
-                </div>
-            </form>
-        </div>
-        <svg id="automaton-canvas" ></svg>
+    <div class="form-container">
+        <form class="h-100 d-flex flex-column justify-content-center">
+            <div class="mb-3">
+                <label for="stateInputed" class="form-label">State: separated by comma</label>
+                <input type="text" class="form-control" id="stateInputed" placeholder="e.g. q0,q1,q2" onkeypress="handleKeyPress(event, 'stateInputed')">
+            </div>
+            <div class="mb-3">
+                <label for="alphabetInputed" class="form-label">Alphabet: separated by comma</label>
+                <input type="text" class="form-control" id="alphabetInputed" placeholder="e.g. ab" onkeypress="handleKeyPress(event, 'alphabetInputed')">
+            </div>
+            <div class="mb-3">
+                <label for="initialstateInputed" class="form-label">Initial state</label>
+                <input type="text" class="form-control" id="initialstateInputed" placeholder="e.g. q0" onkeypress="handleKeyPress(event, 'initialstateInputed')">
+            </div>
+            <div class="mb-3">
+                <label for="finitestateInputed" class="form-label">Finite state</label>
+                <input type="text" class="form-control" id="finitestateInputed" placeholder="e.g. q2" onkeypress="handleKeyPress(event, 'finitestateInputed')">
+            </div>
+            <div class="mb-3">
+                <label for="transitionInputed" class="form-label">Transition</label>
+                <input type="text" class="form-control" id="transitionInputed" placeholder="e.g. q0-a-q1, q1-b-q2" onkeypress="handleKeyPress(event, 'transitionInputed')">
+            </div>
+            <div class="d-flex flex-wrap justify-content-between">
+                <button type="button" class="btn btn-outline-primary" style="width: 48%;" onclick="displayGraph()">Display graph</button>
+                <button type="button" class="btn btn-outline-primary" style="width: 48%;">Minimize DFA</button>
+                <button type="button" class="btn btn-outline-primary" style="width: 48%;" onclick="testString()">Test String (accepted)</button>
+                <button type="button" class="btn btn-outline-primary" style="width: 48%;">Test deterministic</button>
+                <button type="button" class="btn btn-outline-primary" style="width: 100%;">Construct equivalent DFA</button>
+            </div>
+        </form>
     </div>
+    <svg id="automaton-canvas">
+        <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="black" />
+            </marker>
+        </defs>
+    </svg>
+
+    <script>
+        let states = [];
+        let transitions = [];
+        let initialState = null;
+        let finalStates = [];
+        let acceptStates = [];
+
+        function handleKeyPress(event, inputId) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                document.getElementById(inputId).blur();
+            }
+        }
+
+        function displayGraph() {
+            resetGraph();
+            addStates();
+            setInitialState();
+            setFinalStates();
+            addTransitions();
+            determineAcceptStates();
+        }
+
+        function resetGraph() {
+            const canvas = document.getElementById('automaton-canvas');
+            canvas.innerHTML = '';
+            states = [];
+            transitions = [];
+            initialState = null;
+            finalStates = [];
+            acceptStates = [];
+        }
+
+        function addStates() {
+            const input = document.getElementById('stateInputed').value;
+            const newStates = input.split(',').map(state => state.trim()).filter(state => state && !states.includes(state));
+            states.push(...newStates);
+            newStates.forEach(stateId => drawState(stateId));
+        }
+
+        function drawState(stateId) {
+            const canvas = document.getElementById('automaton-canvas');
+            const existingStates = document.querySelectorAll('circle');
+            const stateRadius = 30;
+            let x, y;
+
+            do {
+                x = Math.random() * (canvas.clientWidth - 2 * stateRadius) + stateRadius;
+                y = Math.random() * (canvas.clientHeight - 2 * stateRadius) + stateRadius;
+                var overlap = false;
+                existingStates.forEach(existingState => {
+                    const existingX = parseFloat(existingState.getAttribute('cx'));
+                    const existingY = parseFloat(existingState.getAttribute('cy'));
+                    const distance = Math.sqrt(Math.pow(x - existingX, 2) + Math.pow(y - existingY, 2));
+                    if (distance < 2 * stateRadius) {
+                        overlap = true;
+                    }
+                });
+            } while (overlap);
+
+            const state = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            state.setAttribute('cx', x);
+            state.setAttribute('cy', y);
+            state.setAttribute('r', stateRadius);
+            state.setAttribute('id', stateId);
+            state.setAttribute('stroke', 'black');
+            state.setAttribute('stroke-width', 2);
+            state.setAttribute('fill', 'silver');
+            state.setAttribute('filter', 'drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))');
+            canvas.appendChild(state);
+
+            const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            label.setAttribute('x', x);
+            label.setAttribute('y', y + 5);
+            label.setAttribute('text-anchor', 'middle');
+            label.setAttribute('dy', '.3em');
+            label.textContent = stateId;
+            canvas.appendChild(label);
+
+            if (states.includes(stateId)) {
+                state.setAttribute('fill', 'silver');
+            }
+        }
+        function setInitialState() {
+    const input = document.getElementById('initialstateInputed').value.trim();
+    if (states.includes(input)) {
+        initialState = input;
+        const initialElement = document.getElementById(input);
+        initialElement.setAttribute('fill', 'blue');
+
+        // Add an arrow line pointing to the initial state
+        const canvas = document.getElementById('automaton-canvas');
+        const centerX = parseFloat(initialElement.getAttribute('cx'));
+        const centerY = parseFloat(initialElement.getAttribute('cy'));
+        const arrowLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        arrowLine.setAttribute('x1', centerX - 40);
+        arrowLine.setAttribute('y1', centerY);
+        arrowLine.setAttribute('x2', centerX - 10);
+        arrowLine.setAttribute('y2', centerY);
+        arrowLine.setAttribute('stroke', 'black');
+        arrowLine.setAttribute('stroke-width', 2);
+        arrowLine.setAttribute('marker-end', 'url(#arrow)');
+        canvas.appendChild(arrowLine);
+    } else {
+        alert('Invalid initial state. Please ensure the state exists.');
+    }
+}
+
+
+
+
+        function setFinalStates() {
+            const input = document.getElementById('finitestateInputed').value;
+            const newFinalStates = input.split(',').map(state => state.trim()).filter(state => state && states.includes(state));
+            finalStates = newFinalStates;
+            newFinalStates.forEach(stateId => {
+                const finalElement = document.getElementById(stateId);
+                finalElement.setAttribute('fill', 'green');
+            });
+        }
+
+        function addTransitions() {
+            const input = document.getElementById('transitionInputed').value;
+            const newTransitions = input.split(',').map(transition => transition.trim().split('-'));
+            newTransitions.forEach(([fromState, symbol, toState]) => {
+                if (states.includes(fromState) && states.includes(toState)) {
+                    transitions.push({ from: fromState, symbol: symbol, to: toState });
+                    drawTransition(fromState, toState, symbol);
+                } else {
+                    alert(`Invalid transition from ${fromState} to ${toState}. Please ensure the states exist.`);
+                }
+            });
+        }
+
+        function drawTransition(fromState, toState, symbol) {
+            const canvas = document.getElementById('automaton-canvas');
+            const fromElement = document.getElementById(fromState);
+            const toElement = document.getElementById(toState);
+
+            const fromX = parseFloat(fromElement.getAttribute('cx'));
+            const fromY = parseFloat(fromElement.getAttribute('cy'));
+            const toX = parseFloat(toElement.getAttribute('cx'));
+            const toY = parseFloat(toElement.getAttribute('cy'));
+
+            if (fromState === toState) {
+                addSelfTransition(fromState, symbol);
+            } else {
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', `M${fromX},${fromY} Q${(fromX + toX) / 2},${(fromY + toY) / 2 - 10} ${toX},${toY}`);
+                path.setAttribute('stroke', 'black');
+                path.setAttribute('fill', 'none');
+                canvas.appendChild(path);
+
+                const arrowHead = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                arrowHead.setAttribute('points', `${toX},${toY} ${toX - 5},${toY - 10} ${toX + 5},${toY - 10}`);
+                arrowHead.setAttribute('fill', 'black');
+                canvas.appendChild(arrowHead);
+
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', (fromX + toX) / 2);
+                label.setAttribute('y', (fromY + toY) / 2 - 10);
+                label.setAttribute('text-anchor', 'middle');
+                label.setAttribute('dy', '-0.5em');
+                label.textContent = symbol;
+                canvas.appendChild(label);
+            }
+        }
+
+        function addSelfTransition(state, symbol) {
+            const canvas = document.getElementById('automaton-canvas');
+            const stateElement = document.getElementById(state);
+
+            const cx = parseFloat(stateElement.getAttribute('cx'));
+            const cy = parseFloat(stateElement.getAttribute('cy'));
+
+            const curveX = cx + 20;
+            const curveY = cy - 10;
+            const controlX = cx + 8;
+            const controlY = cy - 100;
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', `M${cx},${cy} Q${curveX},${curveY} ${controlX},${controlY}`);
+            path.setAttribute('stroke', 'black');
+            path.setAttribute('fill', 'none');
+            canvas.appendChild(path);
+
+            const arrowHead = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            arrowHead.setAttribute('points', `${controlX},${controlY} ${controlX - 5},${controlY - 10} ${controlX + 5},${controlY - 10}`);
+            arrowHead.setAttribute('fill', 'black');
+            canvas.appendChild(arrowHead);
+
+            const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            label.setAttribute('x', curveX);
+            label.setAttribute('y', curveY - 10);
+            label.setAttribute('text-anchor', 'middle');
+            label.setAttribute('dy', '-0.5em');
+            label.textContent = symbol;
+            canvas.appendChild(label);
+        }
+
+        function highlightAcceptState(stateId) {
+            const state = document.getElementById(stateId);
+            state.setAttribute('fill', 'green');
+
+            // Add a double circle for the accept state
+            const doubleCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            const radius = parseFloat(state.getAttribute('r'));
+            doubleCircle.setAttribute('cx', parseFloat(state.getAttribute('cx')));
+            doubleCircle.setAttribute('cy', parseFloat(state.getAttribute('cy')));
+            doubleCircle.setAttribute('r', radius * 1.2);
+            doubleCircle.setAttribute('stroke', 'black');
+            doubleCircle.setAttribute('stroke-width', 2);
+            doubleCircle.setAttribute('fill', 'none');
+            doubleCircle.classList.add('double-circle');
+            const canvas = document.getElementById('automaton-canvas');
+            canvas.appendChild(doubleCircle);
+        }
+
+        function testString() {
+            const inputString = prompt('Enter a test string:');
+            if (!inputString) {
+                alert('Please enter a test string.');
+                return;
+            }
+
+            let currentState = initialState;
+            const transitions = inputString.split('');
+            for (const symbol of transitions) {
+                const foundTransition = findTransition(currentState, symbol);
+                if (!foundTransition) {
+                    alert(`No transition found for symbol '${symbol}' from state '${currentState}'.`);
+                    return;
+                }
+                currentState = foundTransition.to;
+            }
+
+            if (acceptStates.includes(currentState)) {
+                alert(`String '${inputString}' is accepted.`);
+            } else {
+                alert(`String '${inputString}' is not accepted.`);
+            }
+        }
+
+        function findTransition(fromState, symbol) {
+            return transitions.find(transition => transition.from === fromState && transition.symbol === symbol);
+        }
+
+        function determineAcceptStates() {
+            acceptStates = [];
+            const visited = {};
+            const queue = [initialState];
+
+            while (queue.length > 0) {
+                const currentState = queue.shift();
+                visited[currentState] = true;
+
+                if (finalStates.includes(currentState)) {
+                    acceptStates.push(currentState);
+                }
+
+                transitions.forEach(transition => {
+                    if (transition.from === currentState && !visited[transition.to]) {
+                        queue.push(transition.to);
+                    }
+                });
+            }
+
+            const canvas = document.getElementById('automaton-canvas');
+            const existingDoubleCircles = document.querySelectorAll('circle.double-circle');
+            existingDoubleCircles.forEach(circle => canvas.removeChild(circle));
+
+            acceptStates.forEach(stateId => {
+                const state = document.getElementById(stateId);
+                if (state) {
+                    highlightAcceptState(stateId);
+                }
+            });
+        }
+    </script>
 </body>
 </html>
