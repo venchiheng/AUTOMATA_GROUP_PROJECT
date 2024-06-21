@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FA Determinism Checker</title>
+</head>
+<style>
+    body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin-top: 10px;
+}
+
+input {
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+button {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#result {
+    margin-top: 20px;
+    font-weight: bold;
+    text-align: center;
+}
+</style>
+<body>
+    <div class="container">
+        <h1>Finite Automaton Determinism Checker</h1>
+        <form id="faForm">
+            <label for="states">States (comma separated):</label>
+            <input type="text" id="states" required>
+
+            <label for="alphabet">Alphabet (comma separated):</label>
+            <input type="text" id="alphabet" required>
+
+            <label for="transitions">Transitions (format: q0,a->q1; q0,b->q2; q2,ε->q0):</label>
+            <input type="text" id="transitions" required>
+
+            <label for="startState">Start State:</label>
+            <input type="text" id="startState" required>
+
+            <button type="submit">Check Determinism</button>
+        </form>
+        <div id="result"></div>
+    </div>
+    <script>
+        document.getElementById('faForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    
+    const states = document.getElementById('states').value.split(',').map(s => s.trim());
+    const alphabet = document.getElementById('alphabet').value.split(',').map(a => a.trim());
+    const transitions = document.getElementById('transitions').value.split(';').map(t => t.trim());
+    const startState = document.getElementById('startState').value.trim();
+
+    const transitionMap = {};
+
+    // Initialize the transition map for each state
+    for (let state of states) {
+        transitionMap[state] = {};
+    }
+
+    let isNonDeterministic = false;
+
+    for (let transition of transitions) {
+        const [fromTo, toState] = transition.split('->').map(part => part.trim());
+        const [fromState, inputSymbol] = fromTo.split(',').map(part => part.trim());
+
+        if (inputSymbol === 'ε') {
+            isNonDeterministic = true;
+            break;
+        }
+
+        if (!transitionMap[fromState][inputSymbol]) {
+            transitionMap[fromState][inputSymbol] = [];
+        }
+        
+        transitionMap[fromState][inputSymbol].push(toState);
+
+        if (transitionMap[fromState][inputSymbol].length > 1) {
+            isNonDeterministic = true;
+            break;
+        }
+    }
+
+    const resultDiv = document.getElementById('result');
+    if (isNonDeterministic) {
+        resultDiv.textContent = 'The FA is Non-Deterministic';
+        resultDiv.style.color = 'red';
+    } else {
+        resultDiv.textContent = 'The FA is Deterministic';
+        resultDiv.style.color = 'green';
+    }
+});
+
+    </script>
+</body>
+</html>
