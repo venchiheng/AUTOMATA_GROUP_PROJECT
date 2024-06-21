@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFA to DFA Converter</title>
+</head>
+<style>
+    body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin-top: 10px;
+}
+
+input {
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+button {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#result {
+    margin-top: 20px;
+    font-weight: bold;
+    text-align: center;
+}
+
+</style>
+<body>
+    <div class="container">
+        <h1>NFA to DFA Converter</h1>
+        <form id="nfaForm">
+            <label for="states">States (comma separated):</label>
+            <input type="text" id="states" required>
+
+            <label for="alphabet">Alphabet (comma separated):</label>
+            <input type="text" id="alphabet" required>
+
+            <label for="transitions">Transitions (format: q0,a->q1; q0,b->q2; q2,ε->q0):</label>
+            <input type="text" id="transitions" required>
+
+            <label for="startState">Start State:</label>
+            <input type="text" id="startState" required>
+
+            <label for="acceptStates">Accept States (comma separated):</label>
+            <input type="text" id="acceptStates" required>
+
+            <button type="submit">Convert to DFA</button>
+        </form>
+        <div id="result"></div>
+    </div>
+    <script>
+        document.getElementById('nfaForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    
+    const states = document.getElementById('states').value.split(',').map(s => s.trim());
+    const alphabet = document.getElementById('alphabet').value.split(',').map(a => a.trim());
+    const transitions = document.getElementById('transitions').value.split(';').map(t => t.trim());
+    const startState = document.getElementById('startState').value.trim();
+    const acceptStates = document.getElementById('acceptStates').value.split(',').map(s => s.trim());
+
+    const transitionMap = {};
+
+    // Initialize the transition map for each state
+    for (let state of states) {
+        transitionMap[state] = {};
+    }
+
+    // Fill the transition map based on the user input
+    for (let transition of transitions) {
+        const [fromTo, toState] = transition.split('->').map(part => part.trim());
+        const [fromState, inputSymbol] = fromTo.split(',').map(part => part.trim());
+        
+        if (!transitionMap[fromState][inputSymbol]) {
+            transitionMap[fromState][inputSymbol] = [];
+        }
+        
+        transitionMap[fromState][inputSymbol].push(toState);
+    }
+
+    // Function to get the epsilon closure of a set of states
+    function epsilonClosure(states) {
+        let stack = [...states];
+        let closure = new Set(states);
+
+        while (stack.length > 0) {
+            let state = stack.pop();
+            if (transitionMap[state] && transitionMap[state]['ε']) {
+                for (let nextState of transitionMap[state]['ε']) {
+                    if (!closure.has(nextState)) {
+                        closure.add(nextState);
+                        stack.push(nextState);
+                    }
+                }
+            }
+        }
+
+        return Array.from(closure);
+    }
+
+    // Function to convert NFA to DFA
+    function convertNFAtoDFA() {
+        let dfaStates = [];
+        let dfaTransitions = {};
+        let dfaStartState = epsilonClosure([startState]).sort().join(',');
+        let dfaAcceptStates = new Set();
+        
+        let unprocessedStates = [dfaStartState];
+        let processedStates = new Set();
+
+        while (unprocessedStates.length > 0) {
+            let currentDFAState = unprocessedStates.pop();
+            if (processedStates.has(currentDFAState)) continue;
+
+            processedStates.add(currentDFAState);
+            dfaStates.push(currentDFAState);
+
+            let nfaStates = currentDFAState.split(',');
+
+            for (let symbol of alphabet) {
+                let nextStates = new Set();
+
+                for (let nfaState of nfaStates) {
+                    if (transitionMap[nfaState] && transitionMap[nfaState][symbol]) {
+                        for (let nextState of transitionMap[nfaState][symbol]) {
+                            epsilonClosure([nextState]).forEach(state => nextStates.add(state));
+                        }
+                    }
+                }
+
+                if (nextStates.size > 0) {
+                    let nextState = Array.from(nextStates).sort().join(',');
+
+                    if (!dfaTransitions[currentDFAState]) {
+                        dfaTransitions[currentDFAState] = {};
+                    }
+                    dfaTransitions[currentDFAState][symbol] = nextState;
+
+                    if (!processedStates.has(nextState)) {
+                        unprocessedStates.push(nextState);
+                    }
+                }
+            }
+
+            // Check if this new DFA state contains any NFA accept states
+            for (let nfaAcceptState of acceptStates) {
+                if (nfaStates.includes(nfaAcceptState)) {
+                    dfaAcceptStates.add(currentDFAState);
+                    break;
+                }
+            }
+        }
+
+        return {
+            states: dfaStates,
+            transitions: dfaTransitions,
+            startState: dfaStartState,
+            acceptStates: Array.from(dfaAcceptStates)
+        };
+    }
+
+    const dfa = convertNFAtoDFA();
+
+    const resultDiv = document.getElementById('result');
+    resultDiv.innerHTML = `<h2>Equivalent DFA</h2>
+        <p><strong>States:</strong> ${dfa.states.join(', ')}</p>
+        <p><strong>Alphabet:</strong> ${alphabet.join(', ')}</p>
+        <p><strong>Transitions:</strong> <pre>${JSON.stringify(dfa.transitions, null, 2)}</pre></p>
+        <p><strong>Start State:</strong> ${dfa.startState}</p>
+        <p><strong>Accept States:</strong> ${dfa.acceptStates.join(', ')}</p>`;
+});
+
+    </script>
+</body>
+</html>
