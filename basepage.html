@@ -82,6 +82,7 @@
                 <button type="button" class="btn btn-outline-primary" style="width: 100%;" onclick="convertNFAToDFA()">Construct equivalent DFA</button>
             </div>
         </form>
+        <div id="result" class="mt-3 text-center"></div>
     </div>
     <svg id="automaton-canvas">
         <defs>
@@ -324,6 +325,52 @@
         document.getElementById('faForm').addEventListener('submit', function(event) {
             event.preventDefault();
         });
+        function testDeterministic() {
+            const states = document.getElementById('stateInputed').value.split(',').map(s => s.trim());
+            const alphabet = document.getElementById('alphabetInputed').value.split(',').map(a => a.trim());
+            const startState = document.getElementById('initialstateInputed').value.trim();
+            const acceptStates = document.getElementById('finitestateInputed').value.split(',').map(s => s.trim());
+            const transitionsInput = document.getElementById('transitionInputed').value.split(';').map(t => t.trim());
+
+            const transitionMap = {};
+
+            // Initialize the transition map for each state
+            for (let state of states) {
+                transitionMap[state] = {};
+            }
+
+            let isNonDeterministic = false;
+
+            for (let transition of transitions) {
+                const [fromTo, inputSymbol, toState] = transition.split(',').map(part => part.trim());
+
+                if (inputSymbol === 'ε') {
+                    isNonDeterministic = true;
+                    break;
+                }
+
+                if (!transitionMap[fromTo]) {
+                    transitionMap[fromTo] = {};
+                }
+                
+                transitionMap[fromTo][inputSymbol] = toState;
+
+                if (Object.keys(transitionMap[fromTo]).length > 1) {
+                    isNonDeterministic = true;
+                    break;
+                }
+            }
+
+            const resultDiv = document.getElementById('result');
+            if (isNonDeterministic) {
+                resultDiv.textContent = 'The FA is Non-Deterministic';
+                resultDiv.style.color = 'red';
+            } else {
+                resultDiv.textContent = 'The FA is Deterministic';
+                resultDiv.style.color = 'green';
+            }
+        }
+
 
         function testString() {
             const states = document.getElementById('stateInputed').value.split(',').map(s => s.trim());

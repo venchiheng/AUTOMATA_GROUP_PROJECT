@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <title>Automata Project</title>
+    <style>
+        .form-container {
+            position: relative;
+            width: 80%;
+            height: 70%;
+            padding: 10px;
+            margin-top: 30px;
+            margin-bottom: 10px;
+            margin-left: 10%;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: larger;
+            background-color: rgb(232, 191, 238);
+            border-radius: 10px;
+        }
+        .form-control, .btn {
+            margin-top: 4px;
+            margin-bottom: 4px;
+        }
+        .container-fluid {
+            font-family: 'Times New Roman', Times, serif;
+        }
+        #automaton-canvas {
+            background-color: rgb(198, 206, 212);
+            margin-left: 10%;
+            margin-bottom: 30px;
+            width: 80%;
+            height: 600px;
+            border-radius: 5px;
+        }
+        .accept-state {
+            stroke-width: 4;
+        }
+        text {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body style="background-color: rgb(90, 120, 82);">
+    <div class="container-fluid text-white text-center mb-2 pt-3 ">
+        <h1>Automata Project</h1>
+    </div>
+    <div class="form-container">
+        <form id="faForm" class="h-100 d-flex flex-column justify-content-center">
+            <div class="mb-3">
+                <label for="states" class="form-label">States: separated by comma</label>
+                <input type="text" class="form-control" id="states" placeholder="e.g. q0,q1,q2" onkeypress="handleKeyPress(event, 'states')">
+            </div>
+            <div class="mb-3">
+                <label for="alphabet" class="form-label">Alphabet: separated by comma</label>
+                <input type="text" class="form-control" id="alphabet" placeholder="e.g. a,b" onkeypress="handleKeyPress(event, 'alphabet')">
+            </div>
+            <div class="mb-3">
+                <label for="startState" class="form-label">Start State</label>
+                <input type="text" class="form-control" id="startState" placeholder="e.g. q0" onkeypress="handleKeyPress(event, 'startState')">
+            </div>
+            <div class="mb-3">
+                <label for="transitions" class="form-label">Transitions: separate with comma (e.g. q0,a,q1; q1,b,q2)</label>
+                <input type="text" class="form-control" id="transitions" placeholder="e.g. q0,a,q1; q1,b,q2" onkeypress="handleKeyPress(event, 'transitions')">
+            </div>
+            <div class="d-flex flex-wrap justify-content-between">
+                <button type="button" class="btn btn-outline-primary" style="width: 48%;" onclick="displayGraph()">Display graph</button>
+                <button type="button" class="btn btn-outline-primary" style="width: 48%;" onclick="minimizeDFA()">Minimize DFA</button>
+                <button type="button" class="btn btn-outline-primary" style="width: 48%;" onclick="testString()">Test String (accepted)</button>
+                <button type="button" class="btn btn-outline-primary" style="width: 48%;" onclick="testDeterministic()">Test deterministic</button>
+                <button type="button" class="btn btn-outline-primary" style="width: 100%;" onclick="convertNFAToDFA()">Construct equivalent DFA</button>
+            </div>
+            <div id="result" class="mt-3 text-center"></div>
+        </form>
+    </div>
+    <svg id="automaton-canvas">
+        <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="black" />
+            </marker>
+        </defs>
+    </svg>
+    <script>
+        function handleKeyPress(event, id) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                document.getElementById(id).blur();
+            }
+        }
+
+        function minimizeDFA() {
+            // Implementation of DFA minimization
+            // Placeholder function for future implementation
+            alert('Minimize DFA function will be implemented here.');
+        }
+
+        function testDeterministic() {
+            const states = document.getElementById('states').value.split(',').map(s => s.trim());
+            const alphabet = document.getElementById('alphabet').value.split(',').map(a => a.trim());
+            const transitions = document.getElementById('transitions').value.split(';').map(t => t.trim());
+            const startState = document.getElementById('startState').value.trim();
+
+            const transitionMap = {};
+
+            // Initialize the transition map for each state
+            for (let state of states) {
+                transitionMap[state] = {};
+            }
+
+            let isNonDeterministic = false;
+
+            for (let transition of transitions) {
+                const [fromTo, inputSymbol, toState] = transition.split(',').map(part => part.trim());
+
+                if (inputSymbol === 'ε') {
+                    isNonDeterministic = true;
+                    break;
+                }
+
+                if (!transitionMap[fromTo]) {
+                    transitionMap[fromTo] = {};
+                }
+                
+                transitionMap[fromTo][inputSymbol] = toState;
+
+                if (Object.keys(transitionMap[fromTo]).length > 1) {
+                    isNonDeterministic = true;
+                    break;
+                }
+            }
+
+            const resultDiv = document.getElementById('result');
+            if (isNonDeterministic) {
+                resultDiv.textContent = 'The FA is Non-Deterministic';
+                resultDiv.style.color = 'red';
+            } else {
+                resultDiv.textContent = 'The FA is Deterministic';
+                resultDiv.style.color = 'green';
+            }
+        }
+    </script>
+</body>
+</html>
