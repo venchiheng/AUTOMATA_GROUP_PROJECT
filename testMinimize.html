@@ -45,7 +45,15 @@
     <input type="text" id="finalStates" placeholder="e.g., q1,q2">
     
     <label for="transitions">Transitions (format: state,alphabet,next_state per line):</label>
-    <textarea id="transitions" rows="5" placeholder="e.g., q0,a,q1\nq0,b,q2\nq1,a,q1\nq1,b,q0\nq2,a,q2\nq2,b,q2"></textarea>
+    <textarea id="transitions" rows="5" 
+    placeholder=
+    "e.g., q0,a,q1
+      q0,b,q0
+      q1,a,q1
+      q1,b,q2
+      q2,a,q1
+      q2,b,q0
+    "></textarea>
     
     <button onclick="minimizeDFA()">Minimize DFA</button>
     
