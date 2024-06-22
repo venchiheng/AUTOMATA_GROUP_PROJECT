@@ -56,7 +56,7 @@
             </div>
             <div class="mb-3">
                 <label for="alphabetInputed" class="form-label">Alphabet: separated by comma</label>
-                <input type="text" class="form-control" id="alphabetInputed" placeholder="e.g. ab" onkeypress="handleKeyPress(event, 'alphabetInputed')">
+                <input type="text" class="form-control" id="alphabetInputed" placeholder="e.g. a,b" onkeypress="handleKeyPress(event, 'alphabetInputed')">
             </div>
             <div class="mb-3">
                 <label for="initialstateInputed" class="form-label">Initial state</label>
@@ -68,13 +68,17 @@
             </div>
             <div class="mb-3">
                 <label for="transitionInputed" class="form-label">Transition</label>
-                <input type="text" class="form-control" id="transitionInputed" placeholder="e.g. q0-a-q1, q1-b-q2" onkeypress="handleKeyPress(event, 'transitionInputed')">
+                <input type="text" class="form-control" id="transitionInputed" placeholder="e.g. q0,a,q1; q1,b,q2" onkeypress="handleKeyPress(event, 'transitionInputed')">
+            </div>
+            <div class="mb-3">
+                <label for="inputString" class="form-label">Input String</label>
+                <input type="text" class="form-control" id="inputString" placeholder="e.g. a,b" onkeypress="handleKeyPress(event, 'inputString')">
             </div>
             <div class="d-flex flex-wrap justify-content-between">
                 <button type="button" class="btn btn-outline-primary" style="width: 48%;" onclick="displayGraph()">Display graph</button>
-                <button type="button" class="btn btn-outline-primary" style="width: 48%;">Minimize DFA</button>
+                <button type="button" class="btn btn-outline-primary" style="width: 48%;" onclick="minimizeDFA()">Minimize DFA</button>
                 <button type="button" class="btn btn-outline-primary" style="width: 48%;" onclick="testString()">Test String (accepted)</button>
-                <button type="button" class="btn btn-outline-primary" style="width: 48%;">Test deterministic</button>
+                <button type="button" class="btn btn-outline-primary" style="width: 48%;" onclick="testDeterministic()">Test deterministic</button>
                 <button type="button" class="btn btn-outline-primary" style="width: 100%;" onclick="convertNFAToDFA()">Construct equivalent DFA</button>
             </div>
         </form>
@@ -305,33 +309,79 @@
             canvas.appendChild(doubleCircle);
         }
 
-        function testString() {
-            const inputString = prompt('Enter a test string:');
-            if (!inputString) {
-                alert('Please enter a test string.');
-                return;
-            }
+        function findTransition(fromState, symbol) {
+            return transitions.find(transition => transition.from === fromState && transition.symbol === symbol);
+        }
 
-            let currentState = initialState;
-            const transitions = inputString.split('');
-            for (const symbol of transitions) {
-                const foundTransition = findTransition(currentState, symbol);
-                if (!foundTransition) {
-                    alert(`No transition found for symbol '${symbol}' from state '${currentState}'.`);
-                    return;
-                }
-                currentState = foundTransition.to;
-            }
-
-            if (acceptStates.includes(currentState)) {
-                alert(`String '${inputString}' is accepted.`);
-            } else {
-                alert(`String '${inputString}' is not accepted.`);
+        // String Acceptance
+        function handleKeyPress(event, id) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                document.getElementById(id).blur();
             }
         }
 
-        function findTransition(fromState, symbol) {
-            return transitions.find(transition => transition.from === fromState && transition.symbol === symbol);
+        document.getElementById('faForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+        });
+
+        function testString() {
+            const states = document.getElementById('stateInputed').value.split(',').map(s => s.trim());
+            const alphabet = document.getElementById('alphabetInputed').value.split(',').map(a => a.trim());
+            const transitions = document.getElementById('transitionInputed').value.split(';').map(t => t.trim());
+            const startState = document.getElementById('initialstateInputed').value.trim();
+            const acceptStates = document.getElementById('finitestateInputed').value.split(',').map(s => s.trim());
+            const inputString = document.getElementById('inputString').value;
+
+            const transitionMap = {};
+
+            // Initialize the transition map for each state
+            for (let state of states) {
+                transitionMap[state] = {};
+            }
+
+            // Fill the transition map based on the user input
+            for (let transition of transitions) {
+                const [fromState, inputSymbol, toState] = transition.split(',').map(part => part.trim());
+                
+                if (!transitionMap[fromState][inputSymbol]) {
+                    transitionMap[fromState][inputSymbol] = [];
+                }
+                
+                transitionMap[fromState][inputSymbol].push(toState);
+            }
+
+            let currentState = startState;
+            let isAccepted = false;
+
+            // Process the input string through the FA
+            for (let symbol of inputString) {
+                if (!transitionMap[currentState] || !transitionMap[currentState][symbol] || transitionMap[currentState][symbol].length !== 1) {
+                    isAccepted = false;
+                    break;
+                }
+                currentState = transitionMap[currentState][symbol][0];
+            }
+
+            if (acceptStates.includes(currentState)) {
+                isAccepted = true;
+            }
+            displayResult(isAccepted);
+        }
+
+        function displayResult(isAccepted) {
+            const svg = document.getElementById('automaton-canvas');
+            svg.innerHTML = ''; // Clear previous content
+
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', svg.clientWidth / 2);
+            text.setAttribute('y', svg.clientHeight / 2);
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('dy', '0.35em');
+            text.textContent = isAccepted ? 'The input string is accepted by the FA' : 'The input string is NOT accepted by the FA';
+            text.setAttribute('fill', isAccepted ? 'green' : 'red');
+            text.setAttribute('font-size', '50px');
+            svg.appendChild(text);
         }
 
         function determineAcceptStates() {
