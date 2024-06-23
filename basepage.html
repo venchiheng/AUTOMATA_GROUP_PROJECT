@@ -217,7 +217,7 @@
 
         function addTransitions() {
             const input = document.getElementById('transitionInputed').value;
-            const newTransitions = input.split(',').map(transition => transition.trim().split('-'));
+            const newTransitions = input.split(';').map(transition => transition.trim().split(','));
             newTransitions.forEach(([fromState, symbol, toState]) => {
                 if (states.includes(fromState) && states.includes(toState)) {
                     transitions.push({ from: fromState, symbol: symbol, to: toState });
@@ -709,7 +709,7 @@ function minimizeDFA() {
     // Output the minimized DFA
     // document.getElementById('output').textContent = formatDFA(minimizedDFA);
     console.log('Minimized DFA:', minimizedDFA);
-    displayGraph(minimizedDFA);
+    displayMGraph(minimizedDFA);
 }
 
 function partitionRefinement(dfa) {
@@ -787,7 +787,7 @@ function formatDFA(dfa) {
     return result;
 }
 
-function displayGraph(dfa) {
+function displayMGraph(dfa) {
     console.log('Displaying DFA:', dfa);
     resetMGraph();
     dfa.states.forEach(state => {
