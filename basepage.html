@@ -1018,7 +1018,10 @@ function highlightMAcceptState(stateId) {
     const canvas = document.getElementById('automaton-canvas');
     canvas.appendChild(doubleCircle);
   }
-  function saveAsImage() {
+
+  let imageCounter = 1;  // Initialize the counter
+
+function saveAsImage() {
     const svgElement = document.getElementById('automaton-canvas');
     const svgData = new XMLSerializer().serializeToString(svgElement);
     const canvas = document.createElement('canvas');
@@ -1046,14 +1049,19 @@ function highlightMAcceptState(stateId) {
         ctx.fillText(`Final States: ${finalStateInput}`, 10, 80);
         ctx.fillText(`Transitions: ${transitionInput}`, 10, 100);
 
+        // Generate a unique filename using the counter
+        const filename = `automaton_graph.${imageCounter}.png`;
+        imageCounter++;  // Increment the counter for the next image
+
         const link = document.createElement('a');
         link.href = canvas.toDataURL('image/png');
-        link.download = 'automaton_graph.png';
+        link.download = filename;
         link.click();
     };
 
     img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
 }
+
 
 
 
