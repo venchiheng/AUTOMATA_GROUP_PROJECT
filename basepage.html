@@ -42,6 +42,10 @@
             font-family: 'Times New Roman', Times, serif;
             font-size: 12px;
         }
+        #output{
+            display: flex;
+            flex-direction: column;
+        }
     </style>
 </head>
 <body style="background-color: rgb(90, 120, 82);">
@@ -72,15 +76,16 @@
             </div>
             <div class="mb-3">
                 <label for="inputString" class="form-label">Input String</label>
-                <input type="text" class="form-control" id="inputString" placeholder="e.g. a,b" onkeypress="handleKeyPress(event, 'inputString')">
+                <input type="text" class="form-control" id="inputString" placeholder="e.g. ab" onkeypress="handleKeyPress(event, 'inputString')">
             </div>
             <div class="d-flex flex-wrap justify-content-between">
                 <button type="button" class="btn btn-outline-primary" style="width: 48%;" onclick="displayGraph()">Display graph</button>
-                <button type="button" class="btn btn-outline-primary" style="width: 48%;" onclick="minimizeDFA()">Minimize DFA</button>
+                <button type="button" class="btn btn-outline-primary" style="width: 48%;" onclick="processAutomaton()">Minimize DFA</button>
                 <button type="button" class="btn btn-outline-primary" style="width: 48%;" onclick="testString()">Test String (accepted)</button>
                 <button type="button" class="btn btn-outline-primary" style="width: 48%;" onclick="testDeterministic()">Test deterministic</button>                
                 <button type="button" class="btn btn-outline-primary" style="width: 100%;" onclick="convertNFAToDFA()">Construct equivalent DFA</button>
                 <button type="button" class="btn btn-outline-primary" style="width: 100%;" onclick="saveAsImage()">Save File</button>
+                <div id="output"></div>
             </div>
         </form>
         <div id="result" class="mt-3 text-center"></div>
@@ -647,6 +652,27 @@
             }
         }
 
+function isDeterministic() {
+    const transitionMap = {};
+    for (let state of states) {
+        transitionMap[state] = {};
+    }
+
+    for (let { from, symbol, to } of transitions) {
+        if (transitionMap[from][symbol]) {
+            return false;  // Multiple transitions for the same symbol from the same state
+        }
+        transitionMap[from][symbol] = to;
+    }
+    return true;
+}
+
+function processAutomaton() {
+    if (!isDeterministic()) {
+        convertNFAToDFA();
+    }
+    minimizeDFA();
+}
 
 function minimizeDFA() {
     // Read inputs
@@ -675,7 +701,7 @@ function minimizeDFA() {
     const minimizedDFA = partitionRefinement(dfa);
 
     // Output the minimized DFA
-    // document.getElementById('output').textContent = formatDFA(minimizedDFA);
+    document.getElementById('output').textContent = formatDFA(minimizedDFA);
     console.log('Minimized DFA:', minimizedDFA);
     displayMGraph(minimizedDFA);
 }
@@ -744,14 +770,16 @@ function partitionRefinement(dfa) {
 }
 
 function formatDFA(dfa) {
-    let result = `States: ${dfa.states.join(', ')}\n`;
+    let result = `Minimizes DFA Output: States: ${dfa.states.join(', ')}\n`;
     result += `Alphabet: ${dfa.alphabet.join(', ')}\n`;
     result += `Start State: ${dfa.startState}\n`;
     result += `Final States: ${dfa.finalStates.join(', ')}\n`;
     result += `Transitions:\n`;
+    let transitionsArray = [];
     for (let t of dfa.transitions) {
-        result += `${t.from}, ${t.input}, ${t.to}\n`;
+        transitionsArray.push(`${t.from},${t.input},${t.to}`);
     }
+    result += transitionsArray.join(';');
     return result;
 }
 
