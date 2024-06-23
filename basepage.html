@@ -324,56 +324,6 @@
             }
         }
 
-        // document.getElementById('faForm').addEventListener('submit', function(event) {
-        //     event.preventDefault();
-        // });
-        function testDeterministic() {
-            const states = document.getElementById('stateInputed').value.split(',').map(s => s.trim());
-            const alphabet = document.getElementById('alphabetInputed').value.split(',').map(a => a.trim());
-            const startState = document.getElementById('initialstateInputed').value.trim();
-            const acceptStates = document.getElementById('finitestateInputed').value.split(',').map(s => s.trim());
-            const transitionsInput = document.getElementById('transitionInputed').value.split(';').map(t => t.trim());
-
-            const transitionMap = {};
-
-            // Initialize the transition map for each state
-            for (let state of states) {
-                transitionMap[state] = {};
-            }
-
-            let isNonDeterministic = false;
-
-            for (let transition of transitions) {
-                const [fromTo, inputSymbol, toState] = transition.split(',').map(part => part.trim());
-
-                if (inputSymbol === 'ε') {
-                    isNonDeterministic = true;
-                    break;
-                }
-
-                if (!transitionMap[fromTo]) {
-                    transitionMap[fromTo] = {};
-                }
-                
-                transitionMap[fromTo][inputSymbol] = toState;
-
-                if (Object.keys(transitionMap[fromTo]).length > 1) {
-                    isNonDeterministic = true;
-                    break;
-                }
-            }
-
-            const resultDiv = document.getElementById('result');
-            if (isNonDeterministic) {
-                resultDiv.textContent = 'The FA is Non-Deterministic';
-                resultDiv.style.color = 'red';
-            } else {
-                resultDiv.textContent = 'The FA is Deterministic';
-                resultDiv.style.color = 'green';
-            }
-        }
-
-
         function testString() {
             const states = document.getElementById('stateInputed').value.split(',').map(s => s.trim());
             const alphabet = document.getElementById('alphabetInputed').value.split(',').map(a => a.trim());
@@ -465,6 +415,60 @@
             });
         }
 
+        function testDeterministic() {
+         // Get input values
+        const states = document.getElementById('stateInputed').value.split(',').map(s => s.trim());
+        const alphabet = document.getElementById('alphabetInputed').value.split(',').map(a => a.trim());
+        const startState = document.getElementById('initialstateInputed').value.trim();
+        const acceptStates = document.getElementById('finitestateInputed').value.split(',').map(s => s.trim());
+        const transitionsInput = document.getElementById('transitionInputed').value.split(';').map(t => t.trim());
+
+        // Initialize the transition map for each state
+        const transitionMap = {};
+        for (let state of states) {
+            transitionMap[state] = {};
+        }
+
+        let isNonDeterministic = false;
+
+        // Process each transition
+        for (let transition of transitionsInput) {
+            const [fromState, inputSymbol, toState] = transition.split(',').map(part => part.trim());
+
+        // Check for epsilon transitions
+        if (inputSymbol === 'ε') {
+            isNonDeterministic = true;
+            break;
+        }
+
+        // Check for duplicate transitions
+        if (transitionMap[fromState][inputSymbol]) {
+            isNonDeterministic = true;
+            break;
+        }
+
+        // Record the transition
+        transitionMap[fromState][inputSymbol] = toState;
+    }
+
+        // Display the result
+        displayResult(!isNonDeterministic);
+}
+
+        function displayResult(isDeterministic) {
+        const svg = document.getElementById('automaton-canvas');
+        svg.innerHTML = ''; // Clear previous content
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', svg.clientWidth / 2);
+        text.setAttribute('y', svg.clientHeight / 2);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('dy', '0.35em');
+        text.textContent = isDeterministic ? 'The FA is Deterministic' : 'The FA is Non-Deterministic';
+        text.setAttribute('fill', isDeterministic ? 'green' : 'red');
+        text.setAttribute('font-size', '50px');
+        svg.appendChild(text);
+    }
 
         function convertNFAToDFA() {
             // Read user inputs
