@@ -467,163 +467,215 @@
 
 
         function convertNFAToDFA() {
-    // Read user inputs
-    const states = document.getElementById('stateInputed').value.split(',').map(s => s.trim());
-    const alphabet = document.getElementById('alphabetInputed').value.split(',').map(a => a.trim());
-    const startState = document.getElementById('initialstateInputed').value.trim();
-    const acceptStates = document.getElementById('finitestateInputed').value.split(',').map(s => s.trim());
-    const transitionsInput = document.getElementById('transitionInputed').value.split(';').map(t => t.trim());
+            // Read user inputs
+            const states = document.getElementById('stateInputed').value.split(',').map(s => s.trim());
+            const alphabet = document.getElementById('alphabetInputed').value.split(',').map(a => a.trim());
+            const startState = document.getElementById('initialstateInputed').value.trim();
+            const acceptStates = document.getElementById('finitestateInputed').value.split(',').map(s => s.trim());
+            const transitionsInput = document.getElementById('transitionInputed').value.split(';').map(t => t.trim());
 
-    // Initialize NFA transition function
-    let nfaTransitions = {};
-    transitionsInput.forEach(transition => {
-        const [fromState, symbol, toState] = transition.split(',').map(t => t.trim());
-        if (!nfaTransitions[fromState]) {
-            nfaTransitions[fromState] = {};
-        }
-        if (!nfaTransitions[fromState][symbol]) {
-            nfaTransitions[fromState][symbol] = [];
-        }
-        nfaTransitions[fromState][symbol].push(toState);
-    });
+            // Initialize NFA transition function
+            let nfaTransitions = {};
+            transitionsInput.forEach(transition => {
+                const [fromState, symbol, toState] = transition.split(',').map(t => t.trim());
+                if (!nfaTransitions[fromState]) {
+                    nfaTransitions[fromState] = {};
+                }
+                if (!nfaTransitions[fromState][symbol]) {
+                    nfaTransitions[fromState][symbol] = [];
+                }
+                nfaTransitions[fromState][symbol].push(toState);
+            });
 
-    // Convert NFA to DFA
-    let dfaStates = new Set();
-    let dfaTransitions = {};
-    let dfaStartState = [startState].toString();
-    let dfaAcceptStates = new Set();
+            // Convert NFA to DFA
+            let dfaStates = new Set();
+            let dfaTransitions = {};
+            let dfaStartState = [startState].toString();
+            let dfaAcceptStates = new Set();
 
-    let queue = [[startState]];
-    while (queue.length > 0) {
-        let current = queue.shift();
-        let currentStr = current.toString();
+            let queue = [[startState]];
+            while (queue.length > 0) {
+                let current = queue.shift();
+                let currentStr = current.toString();
 
-        if (!dfaTransitions[currentStr]) {
-            dfaTransitions[currentStr] = {};
-        }
+                if (!dfaTransitions[currentStr]) {
+                    dfaTransitions[currentStr] = {};
+                }
 
-        for (let symbol of alphabet) {
-            let nextStates = new Set();
-            for (let state of current) {
-                if (nfaTransitions[state] && nfaTransitions[state][symbol]) {
-                    nfaTransitions[state][symbol].forEach(next => nextStates.add(next));
+                for (let symbol of alphabet) {
+                    let nextStates = new Set();
+                    for (let state of current) {
+                        if (nfaTransitions[state] && nfaTransitions[state][symbol]) {
+                            nfaTransitions[state][symbol].forEach(next => nextStates.add(next));
+                        }
+                    }
+                    let nextStatesArray = Array.from(nextStates).sort();
+                    let nextStatesStr = nextStatesArray.toString();
+
+                    if (nextStatesArray.length > 0) {
+                        dfaTransitions[currentStr][symbol] = nextStatesStr;
+                        if (!dfaStates.has(nextStatesStr)) {
+                            dfaStates.add(nextStatesStr);
+                            queue.push(nextStatesArray);
+                        }
+                    }
                 }
             }
-            let nextStatesArray = Array.from(nextStates).sort();
-            let nextStatesStr = nextStatesArray.toString();
 
-            if (nextStatesArray.length > 0) {
-                dfaTransitions[currentStr][symbol] = nextStatesStr;
-                if (!dfaStates.has(nextStatesStr)) {
-                    dfaStates.add(nextStatesStr);
-                    queue.push(nextStatesArray);
+            // Determine DFA accept states
+            for (let dfaState of dfaStates) {
+                let dfaStateArray = dfaState.split(',');
+                if (dfaStateArray.some(state => acceptStates.includes(state))) {
+                    dfaAcceptStates.add(dfaState);
                 }
             }
+
+            // Display DFA result
+            let svg = document.getElementById('automaton-canvas');
+            svg.innerHTML = ''; // Clear previous SVG content
+
+            let defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+
+            // Define arrow marker
+            let marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+            marker.setAttribute('id', 'arrowhead');
+            marker.setAttribute('markerWidth', '10');
+            marker.setAttribute('markerHeight', '7');
+            marker.setAttribute('refX', '10');
+            marker.setAttribute('refY', '3.5');
+            marker.setAttribute('orient', 'auto');
+            let arrowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            arrowPath.setAttribute('d', 'M0,0 L10,3.5 L0,7 Z');
+            arrowPath.setAttribute('fill', 'black');
+            marker.appendChild(arrowPath);
+            defs.appendChild(marker);
+            svg.appendChild(defs);
+
+            let centerX = svg.clientWidth / 2;
+            let centerY = svg.clientHeight / 2;
+            let radius = 20;
+            let statePositions = {};
+            let angleIncrement = (2 * Math.PI) / dfaStates.size;
+            let currentAngle = 0;
+
+            // Draw states
+            dfaStates.forEach((state, index) => {
+                let x = centerX + 200 * Math.cos(currentAngle);
+                let y = centerY + 200 * Math.sin(currentAngle);
+                statePositions[state] = { x, y };
+
+                // Draw state circle
+                let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', x);
+                circle.setAttribute('cy', y);
+                circle.setAttribute('r', radius);
+                circle.setAttribute('stroke', 'black');
+                circle.setAttribute('stroke-width', '2');
+                circle.setAttribute('fill', dfaAcceptStates.has(state) ? 'lightgreen' : 'white');
+                svg.appendChild(circle);
+
+                // Draw double circle for accept states
+                if (dfaAcceptStates.has(state)) {
+                    let innerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    innerCircle.setAttribute('cx', x);
+                    innerCircle.setAttribute('cy', y);
+                    innerCircle.setAttribute('r', radius - 4);
+                    innerCircle.setAttribute('stroke', 'black');
+                    innerCircle.setAttribute('stroke-width', '2');
+                    innerCircle.setAttribute('fill', 'none');
+                    svg.appendChild(innerCircle);
+                }
+
+                // Draw state text
+                let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', x);
+                text.setAttribute('y', y);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('dy', '0.35em');
+                text.textContent = state;
+                svg.appendChild(text);
+
+                currentAngle += angleIncrement;
+            });
+
+            // Draw transitions with arrows
+            Object.entries(dfaTransitions).forEach(([fromState, trans]) => {
+                Object.entries(trans).forEach(([symbol, toState]) => {
+                    let fromPos = statePositions[fromState];
+                    let toPos = statePositions[toState];
+
+                    if (fromPos && toPos) {
+                        // Adjust positions to account for radius
+                        let dx = toPos.x - fromPos.x;
+                        let dy = toPos.y - fromPos.y;
+                        let distance = Math.sqrt(dx * dx + dy * dy);
+                        let adjustedFromX = fromPos.x + (dx * radius) / distance;
+                        let adjustedFromY = fromPos.y + (dy * radius) / distance;
+                        let adjustedToX = toPos.x - (dx * radius) / distance;
+                        let adjustedToY = toPos.y - (dy * radius) / distance;
+
+                        // Draw transition arrow
+                        let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', adjustedFromX);
+                        line.setAttribute('y1', adjustedFromY);
+                        line.setAttribute('x2', adjustedToX);
+                        line.setAttribute('y2', adjustedToY);
+                        line.setAttribute('stroke', 'black');
+                        line.setAttribute('marker-end', 'url(#arrowhead)');
+                        svg.appendChild(line);
+
+                        // Draw transition text
+                        let midX = (adjustedFromX + adjustedToX) / 2;
+                        let midY = (adjustedFromY + adjustedToY) / 2;
+                        let transText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        transText.setAttribute('x', midX);
+                        transText.setAttribute('y', midY);
+                        transText.setAttribute('text-anchor', 'middle');
+                        transText.setAttribute('dy', '-0.5em');
+                        transText.textContent = symbol;
+                        svg.appendChild(transText);
+                    }
+                });
+            });
+
+            // Draw self-loops for infinite states
+            Object.entries(dfaTransitions).forEach(([fromState, trans]) => {
+                Object.entries(trans).forEach(([symbol, toState]) => {
+                    if (fromState === toState) {
+                        let pos = statePositions[fromState];
+
+                        // Draw curved self-loop
+                        let loop = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        let loopRadius = radius + 20;
+                        loop.setAttribute('d', `M ${pos.x},${pos.y - radius} C ${pos.x - loopRadius},${pos.y - loopRadius} ${pos.x + loopRadius},${pos.y - loopRadius} ${pos.x},${pos.y - radius}`);
+                        loop.setAttribute('stroke', 'black');
+                        loop.setAttribute('fill', 'none');
+                        loop.setAttribute('marker-end', 'url(#arrowhead)');
+                        svg.appendChild(loop);
+
+                        // Draw transition text
+                        let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        text.setAttribute('x', pos.x);
+                        text.setAttribute('y', pos.y - loopRadius - 10);
+                        text.setAttribute('text-anchor', 'middle');
+                        text.textContent = symbol;
+                        svg.appendChild(text);
+                    }
+                });
+            });
+
+            // Draw initial state arrow
+            let initialPos = statePositions[dfaStartState];
+            if (initialPos) {
+                let startArrow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                startArrow.setAttribute('d', `M ${initialPos.x - 60},${initialPos.y} L ${initialPos.x - radius},${initialPos.y}`);
+                startArrow.setAttribute('stroke', 'black');
+                startArrow.setAttribute('marker-end', 'url(#arrowhead)');
+                svg.appendChild(startArrow);
+            }
         }
-    }
 
-    // Determine DFA accept states
-    for (let dfaState of dfaStates) {
-        let dfaStateArray = dfaState.split(',');
-        if (dfaStateArray.some(state => acceptStates.includes(state))) {
-            dfaAcceptStates.add(dfaState);
-        }
-    }
 
-    // Display DFA result
-    let svg = document.getElementById('automaton-canvas');
-    svg.innerHTML = ''; // Clear previous SVG content
-
-    let defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-
-    // Define arrow marker
-    let marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
-    marker.setAttribute('id', 'arrowhead');
-    marker.setAttribute('markerWidth', '10');
-    marker.setAttribute('markerHeight', '7');
-    marker.setAttribute('refX', '10');
-    marker.setAttribute('refY', '3.5');
-    marker.setAttribute('orient', 'auto');
-    let arrowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    arrowPath.setAttribute('d', 'M0,0 L10,3.5 L0,7 Z');
-    arrowPath.setAttribute('fill', 'black');
-    marker.appendChild(arrowPath);
-    defs.appendChild(marker);
-    svg.appendChild(defs);
-
-    let centerX = svg.clientWidth / 2;
-    let centerY = svg.clientHeight / 2;
-    let radius = 20;
-    let statePositions = {};
-    let angleIncrement = (2 * Math.PI) / dfaStates.size;
-    let currentAngle = 0;
-
-    // Draw states
-    dfaStates.forEach((state, index) => {
-        let x = centerX + 200 * Math.cos(currentAngle);
-        let y = centerY + 200 * Math.sin(currentAngle);
-        statePositions[state] = { x, y };
-
-        // Draw state circle
-        let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('cx', x);
-        circle.setAttribute('cy', y);
-        circle.setAttribute('r', radius);
-        circle.setAttribute('stroke', 'black');
-        circle.setAttribute('stroke-width', '2');
-        circle.setAttribute('fill', acceptStates.includes(state) ? 'lightgreen' : 'white');
-        svg.appendChild(circle);
-
-        // Draw state text
-        let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', x);
-        text.setAttribute('y', y);
-        text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('dy', '0.35em');
-        text.textContent = state;
-        svg.appendChild(text);
-
-        currentAngle += angleIncrement;
-    });
-
-    // Draw transitions with arrows
-    Object.entries(dfaTransitions).forEach(([fromState, trans]) => {
-        Object.entries(trans).forEach(([symbol, toState]) => {
-            let fromPos = statePositions[fromState];
-            let toPos = statePositions[toState];
-
-            // Adjust positions to account for radius
-            let dx = toPos.x - fromPos.x;
-            let dy = toPos.y - fromPos.y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-            let adjustedFromX = fromPos.x + (dx * radius) / distance;
-            let adjustedFromY = fromPos.y + (dy * radius) / distance;
-            let adjustedToX = toPos.x - (dx * radius) / distance;
-            let adjustedToY = toPos.y - (dy * radius) / distance;
-
-            // Draw transition arrow
-            let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('x1', adjustedFromX);
-            line.setAttribute('y1', adjustedFromY);
-            line.setAttribute('x2', adjustedToX);
-            line.setAttribute('y2', adjustedToY);
-            line.setAttribute('stroke', 'black');
-            line.setAttribute('marker-end', 'url(#arrowhead)');
-            svg.appendChild(line);
-
-            // Draw transition text
-            let midX = (adjustedFromX + adjustedToX) / 2;
-            let midY = (adjustedFromY + adjustedToY) / 2;
-            let transText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            transText.setAttribute('x', midX);
-            transText.setAttribute('y', midY);
-            transText.setAttribute('text-anchor', 'middle');
-            transText.setAttribute('dy', '-0.5em');
-            transText.textContent = symbol;
-            svg.appendChild(transText);
-        });
-    });
-}
 function minimizeDFA() {
     // Read inputs
     const states = document.getElementById('stateInputed').value.split(',').map(s => s.trim());
