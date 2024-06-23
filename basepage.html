@@ -325,95 +325,63 @@
         }
 
         function testString() {
-            const states = document.getElementById('stateInputed').value.split(',').map(s => s.trim());
-            const alphabet = document.getElementById('alphabetInputed').value.split(',').map(a => a.trim());
-            const transitions = document.getElementById('transitionInputed').value.split(';').map(t => t.trim());
-            const startState = document.getElementById('initialstateInputed').value.trim();
-            const acceptStates = document.getElementById('finitestateInputed').value.split(',').map(s => s.trim());
-            const inputString = document.getElementById('inputString').value;
+        const states = document.getElementById('stateInputed').value.split(',').map(s => s.trim());
+        const alphabet = document.getElementById('alphabetInputed').value.split(',').map(a => a.trim());
+        const transitions = document.getElementById('transitionInputed').value.split(';').map(t => t.trim());
+        const startState = document.getElementById('initialstateInputed').value.trim();
+        const acceptStates = document.getElementById('finitestateInputed').value.split(',').map(s => s.trim());
+        const inputString = document.getElementById('inputString').value;
 
-            const transitionMap = {};
+        const transitionMap = {};
 
-            // Initialize the transition map for each state
-            for (let state of states) {
-                transitionMap[state] = {};
-            }
-
-            // Fill the transition map based on the user input
-            for (let transition of transitions) {
-                const [fromState, inputSymbol, toState] = transition.split(',').map(part => part.trim());
-                
-                if (!transitionMap[fromState][inputSymbol]) {
-                    transitionMap[fromState][inputSymbol] = [];
-                }
-                
-                transitionMap[fromState][inputSymbol].push(toState);
-            }
-
-            let currentState = startState;
-            let isAccepted = false;
-
-            // Process the input string through the FA
-            for (let symbol of inputString) {
-                if (!transitionMap[currentState] || !transitionMap[currentState][symbol] || transitionMap[currentState][symbol].length !== 1) {
-                    isAccepted = false;
-                    break;
-                }
-                currentState = transitionMap[currentState][symbol][0];
-            }
-
-            if (acceptStates.includes(currentState)) {
-                isAccepted = true;
-            }
-            displayResult(isAccepted);
+        // Initialize the transition map for each state
+        for (let state of states) {
+            transitionMap[state] = {};
         }
 
-        function displayResult(isAccepted) {
-            const svg = document.getElementById('automaton-canvas');
-            svg.innerHTML = ''; // Clear previous content
+        // Fill the transition map based on the user input
+        for (let transition of transitions) {
+            const [fromState, inputSymbol, toState] = transition.split(',').map(part => part.trim());
 
-            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            text.setAttribute('x', svg.clientWidth / 2);
-            text.setAttribute('y', svg.clientHeight / 2);
-            text.setAttribute('text-anchor', 'middle');
-            text.setAttribute('dy', '0.35em');
-            text.textContent = isAccepted ? 'The input string is accepted by the FA' : 'The input string is NOT accepted by the FA';
-            text.setAttribute('fill', isAccepted ? 'green' : 'red');
-            text.setAttribute('font-size', '50px');
-            svg.appendChild(text);
-        }
-
-        function determineAcceptStates() {
-            acceptStates = [];
-            const visited = {};
-            const queue = [initialState];
-
-            while (queue.length > 0) {
-                const currentState = queue.shift();
-                visited[currentState] = true;
-
-                if (finalStates.includes(currentState)) {
-                    acceptStates.push(currentState);
-                }
-
-                transitions.forEach(transition => {
-                    if (transition.from === currentState && !visited[transition.to]) {
-                        queue.push(transition.to);
-                    }
-                });
+            if (!transitionMap[fromState][inputSymbol]) {
+                transitionMap[fromState][inputSymbol] = [];
             }
 
-            const canvas = document.getElementById('automaton-canvas');
-            const existingDoubleCircles = document.querySelectorAll('circle.double-circle');
-            existingDoubleCircles.forEach(circle => canvas.removeChild(circle));
-
-            acceptStates.forEach(stateId => {
-                const state = document.getElementById(stateId);
-                if (state) {
-                    highlightAcceptState(stateId);
-                }
-            });
+            transitionMap[fromState][inputSymbol].push(toState);
         }
+
+        let currentState = startState;
+        let isAccepted = false;
+
+        // Process the input string through the FA
+        for (let symbol of inputString) {
+            if (!transitionMap[currentState] || !transitionMap[currentState][symbol] || transitionMap[currentState][symbol].length !== 1) {
+                isAccepted = false;
+                break;
+            }
+            currentState = transitionMap[currentState][symbol][0];
+        }
+
+        if (acceptStates.includes(currentState)) {
+            isAccepted = true;
+        }
+        displayStringResult(isAccepted);
+    }
+
+        function displayStringResult(isAccepted) {
+        const svg = document.getElementById('automaton-canvas');
+        svg.innerHTML = ''; // Clear previous content
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', svg.clientWidth / 2);
+        text.setAttribute('y', svg.clientHeight / 2);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('dy', '0.35em');
+        text.textContent = isAccepted ? 'The input string is accepted by the FA' : 'The input string is NOT accepted by the FA';
+        text.setAttribute('fill', isAccepted ? 'green' : 'red');
+        text.setAttribute('font-size', '50px');
+        svg.appendChild(text);
+    }
 
         function testDeterministic() {
          // Get input values
