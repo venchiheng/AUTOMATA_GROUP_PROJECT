@@ -217,7 +217,7 @@
 
         function addTransitions() {
             const input = document.getElementById('transitionInputed').value;
-            const newTransitions = input.split(',').map(transition => transition.trim().split('-'));
+            const newTransitions = input.split(';').map(transition => transition.trim().split(','));
             newTransitions.forEach(([fromState, symbol, toState]) => {
                 if (states.includes(fromState) && states.includes(toState)) {
                     transitions.push({ from: fromState, symbol: symbol, to: toState });
@@ -677,7 +677,7 @@ function minimizeDFA() {
     // Output the minimized DFA
     // document.getElementById('output').textContent = formatDFA(minimizedDFA);
     console.log('Minimized DFA:', minimizedDFA);
-    displayGraph(minimizedDFA);
+    displayMGraph(minimizedDFA);
 }
 
 function partitionRefinement(dfa) {
@@ -755,7 +755,7 @@ function formatDFA(dfa) {
     return result;
 }
 
-function displayGraph(dfa) {
+function displayMGraph(dfa) {
     console.log('Displaying DFA:', dfa);
     resetMGraph();
     dfa.states.forEach(state => {
@@ -986,7 +986,10 @@ function highlightMAcceptState(stateId) {
     const canvas = document.getElementById('automaton-canvas');
     canvas.appendChild(doubleCircle);
   }
-  function saveAsImage() {
+
+  let imageCounter = 1;  // Initialize the counter
+
+function saveAsImage() {
     const svgElement = document.getElementById('automaton-canvas');
     const svgData = new XMLSerializer().serializeToString(svgElement);
     const canvas = document.createElement('canvas');
@@ -1014,14 +1017,19 @@ function highlightMAcceptState(stateId) {
         ctx.fillText(`Final States: ${finalStateInput}`, 10, 80);
         ctx.fillText(`Transitions: ${transitionInput}`, 10, 100);
 
+        // Generate a unique filename using the counter
+        const filename = `automaton_graph.${imageCounter}.png`;
+        imageCounter++;  // Increment the counter for the next image
+
         const link = document.createElement('a');
         link.href = canvas.toDataURL('image/png');
-        link.download = 'automaton_graph.png';
+        link.download = filename;
         link.click();
     };
 
     img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
 }
+
 
 
 
