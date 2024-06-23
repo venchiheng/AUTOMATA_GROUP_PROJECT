@@ -189,27 +189,11 @@
             const initialElement = document.getElementById(input);
             initialElement.setAttribute('fill', 'blue');
 
-            // Add an arrow line pointing to the initial state
-            const canvas = document.getElementById('automaton-canvas');
-            const centerX = parseFloat(initialElement.getAttribute('cx'));
-            const centerY = parseFloat(initialElement.getAttribute('cy'));
-            const arrowLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            arrowLine.setAttribute('x1', centerX - 40);
-            arrowLine.setAttribute('y1', centerY);
-            arrowLine.setAttribute('x2', centerX - 10);
-            arrowLine.setAttribute('y2', centerY);
-            arrowLine.setAttribute('stroke', 'black');
-            arrowLine.setAttribute('stroke-width', 2);
-            arrowLine.setAttribute('marker-end', 'url(#arrow)');
-            canvas.appendChild(arrowLine);
+          
         } else {
             alert('Invalid initial state. Please ensure the state exists.');
         }
     }
-
-
-
-
     function setFinalStates() {
         const input = document.getElementById('finitestateInputed').value;
         const newFinalStates = input.split(',').map(state => state.trim()).filter(state => state && states.includes(state));
@@ -1015,23 +999,19 @@
     }
 
     //save data/output as image to local storage
-
     let imageCounter = 1;  // Initialize the counter
-
-    function saveAsImage() {
+     function saveAsImage() {
         const svgElement = document.getElementById('automaton-canvas');
         const svgData = new XMLSerializer().serializeToString(svgElement);
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         const img = new Image();
-
         img.onload = function () {
         const { width, height } = svgElement.getBoundingClientRect();
         canvas.width = width;
         canvas.height = height;
         ctx.drawImage(img, 0, 0);
-
-        // Draw user input values on the canvas
+    // Draw user input values on the canvas
         const stateInput = document.getElementById('stateInputed').value;
         const alphabetInput = document.getElementById('alphabetInputed').value;
         const initialStateInput = document.getElementById('initialstateInputed').value;
