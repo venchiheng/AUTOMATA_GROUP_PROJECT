@@ -80,6 +80,7 @@
                 <button type="button" class="btn btn-outline-primary" style="width: 48%;" onclick="testString()">Test String (accepted)</button>
                 <button type="button" class="btn btn-outline-primary" style="width: 48%;" onclick="testDeterministic()">Test deterministic</button>                
                 <button type="button" class="btn btn-outline-primary" style="width: 100%;" onclick="convertNFAToDFA()">Construct equivalent DFA</button>
+                <button type="button" class="btn btn-outline-primary" style="width: 100%;" onclick="saveAsImage()">Save File</button>
             </div>
         </form>
         <div id="result" class="mt-3 text-center"></div>
@@ -960,7 +961,46 @@ function highlightMAcceptState(stateId) {
     doubleCircle.classList.add('double-circle');
     const canvas = document.getElementById('automaton-canvas');
     canvas.appendChild(doubleCircle);
+  }
+  function saveAsImage() {
+    const svgElement = document.getElementById('automaton-canvas');
+    const svgData = new XMLSerializer().serializeToString(svgElement);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+
+    img.onload = function () {
+        const { width, height } = svgElement.getBoundingClientRect();
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(img, 0, 0);
+
+        // Draw user input values on the canvas
+        const stateInput = document.getElementById('stateInputed').value;
+        const alphabetInput = document.getElementById('alphabetInputed').value;
+        const initialStateInput = document.getElementById('initialstateInputed').value;
+        const finalStateInput = document.getElementById('finitestateInputed').value;
+        const transitionInput = document.getElementById('transitionInputed').value;
+
+        ctx.font = '14px Arial';
+        ctx.fillStyle = 'black';
+        ctx.fillText(`States: ${stateInput}`, 10, 20);
+        ctx.fillText(`Alphabet: ${alphabetInput}`, 10, 40);
+        ctx.fillText(`Initial State: ${initialStateInput}`, 10, 60);
+        ctx.fillText(`Final States: ${finalStateInput}`, 10, 80);
+        ctx.fillText(`Transitions: ${transitionInput}`, 10, 100);
+
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = 'automaton_graph.png';
+        link.click();
+    };
+
+    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
 }
+
+
+
     </script>
 </body>
 </html>

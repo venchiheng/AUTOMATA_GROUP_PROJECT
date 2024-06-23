@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Save Form Data to File</title>
+    <script >
+        function downloadFormData() {
+    // Get form data
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const message = document.getElementById('message').value;
+
+    // Create a string with the form data
+    const formData = `Name: ${name}\nEmail: ${email}\nMessage: ${message}`;
+
+    // Create a blob with the form data
+    const blob = new Blob([formData], { type: 'text/plain' });
+
+    // Create an anchor element and click it programmatically to trigger the download
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'form_data.txt';
+    link.click();
+
+    // Clean up
+    URL.revokeObjectURL(link.href);
+}
+
+    </script>
+</head>
+<body>
+    <h1>Save Form Data to File</h1>
+    <form id="userForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name"><br><br>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email"><br><br>
+        <label for="message">Message:</label><br>
+        <textarea id="message" name="message" rows="4" cols="50"></textarea><br><br>
+        <button type="button" onclick="downloadFormData()">Download Data</button>
+    </form>
+</body>
+</html>
